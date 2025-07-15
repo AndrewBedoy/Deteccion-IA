@@ -130,94 +130,93 @@
   <div id="label-container"></div>
 
   <script>
-    let model, webcam, labelContainer, maxPredictions;
-    let currentModelURL = "";
-    let facingMode = "user";
-    let loopId;
+  let model, webcam, labelContainer, maxPredictions;
+  let currentModelURL = "";
+  let facingMode = "environment"; // Trasera por defecto
+  let loopId;
 
-    async function init() {
-      stop();
+  async function init() {
+    stop();
 
-      currentModelURL = document.getElementById("modelSelect").value;
-      const modelURL = currentModelURL + "model.json";
-      const metadataURL = currentModelURL + "metadata.json";
+    currentModelURL = document.getElementById("modelSelect").value;
+    const modelURL = currentModelURL + "model.json";
+    const metadataURL = currentModelURL + "metadata.json";
 
-      try {
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
+    try {
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
 
-        webcam = new tmImage.Webcam(400, 400, false, {
-          facingMode: { exact: facingMode }
-        });
+      webcam = new tmImage.Webcam(400, 400, false, { facingMode }); // <-- aquí
 
-        await webcam.setup();
-        await webcam.play();
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
+      await webcam.setup();
+      await webcam.play();
+      document.getElementById("webcam-container").innerHTML = "";
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-        labelContainer = document.getElementById("label-container");
-        labelContainer.innerHTML = "";
-
-        for (let i = 0; i < maxPredictions; i++) {
-          const labelDiv = document.createElement("div");
-          labelDiv.className = "label";
-
-          const labelText = document.createElement("div");
-          labelText.className = "label-text";
-          labelText.innerText = "Clase";
-
-          const barContainer = document.createElement("div");
-          barContainer.className = "bar-container";
-
-          const bar = document.createElement("div");
-          bar.className = "bar";
-
-          barContainer.appendChild(bar);
-          labelDiv.appendChild(labelText);
-          labelDiv.appendChild(barContainer);
-          labelContainer.appendChild(labelDiv);
-        }
-
-        loop();
-      } catch (e) {
-        alert("Error: " + e.message);
-        console.error(e);
-      }
-    }
-
-    async function loop() {
-      webcam.update();
-      await predict();
-      loopId = window.requestAnimationFrame(loop);
-    }
-
-    async function predict() {
-      const prediction = await model.predict(webcam.canvas);
-      const labelElements = document.getElementById("label-container").children;
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
 
       for (let i = 0; i < maxPredictions; i++) {
-        const className = prediction[i].className;
-        const prob = (prediction[i].probability * 100).toFixed(1);
-        const labelDiv = labelElements[i];
-        labelDiv.querySelector(".label-text").innerText = `${className}: ${prob}%`;
-        labelDiv.querySelector(".bar").style.width = `${prob}%`;
-      }
-    }
+        const labelDiv = document.createElement("div");
+        labelDiv.className = "label";
 
-    async function switchCamera() {
-      facingMode = facingMode === "user" ? "environment" : "user";
-      await init();
-    }
+        const labelText = document.createElement("div");
+        labelText.className = "label-text";
+        labelText.innerText = "Clase";
 
-    async function stop() {
-      if (webcam) {
-        await webcam.stop();
-        cancelAnimationFrame(loopId);
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("label-container").innerHTML = "";
-        webcam = null;
+        const barContainer = document.createElement("div");
+        barContainer.className = "bar-container";
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+
+        barContainer.appendChild(bar);
+        labelDiv.appendChild(labelText);
+        labelDiv.appendChild(barContainer);
+        labelContainer.appendChild(labelDiv);
       }
+
+      loop();
+    } catch (e) {
+      alert("Error: " + e.message);
+      console.error(e);
     }
-  </script>
+  }
+
+  async function switchCamera() {
+    facingMode = facingMode === "user" ? "environment" : "user";
+    await init();
+  }
+
+  async function stop() {
+    if (webcam) {
+      await webcam.stop();
+      cancelAnimationFrame(loopId);
+      document.getElementById("webcam-container").innerHTML = "";
+      document.getElementById("label-container").innerHTML = "";
+      webcam = null;
+    }
+  }
+
+  async function loop() {
+    webcam.update();
+    await predict();
+    loopId = window.requestAnimationFrame(loop);
+  }
+
+  async function predict() {
+    const prediction = await model.predict(webcam.canvas);
+    const labelElements = document.getElementById("label-container").children;
+
+    for (let i = 0; i < maxPredictions; i++) {
+      const className = prediction[i].className;
+      const prob = (prediction[i].probability * 100).toFixed(1);
+      const labelDiv = labelElements[i];
+      labelDiv.querySelector(".label-text").innerText = `${className}: ${prob}%`;
+      labelDiv.querySelector(".bar").style.width = `${prob}%`;
+    }
+  }
+</script>
+
 </body>
 </html>
