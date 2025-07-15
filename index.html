@@ -11,7 +11,6 @@
     * {
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(to bottom right, #eef2f3, #cfd9df);
@@ -22,14 +21,12 @@
       align-items: center;
       min-height: 100vh;
     }
-
     h1 {
       color: #1f2937;
       font-size: 2rem;
       margin-bottom: 20px;
       text-align: center;
     }
-
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -37,7 +34,6 @@
       gap: 10px;
       margin-bottom: 20px;
     }
-
     .button {
       background: linear-gradient(to right, #3b82f6, #2563eb);
       color: white;
@@ -49,12 +45,10 @@
       transition: transform 0.2s ease, background 0.3s ease;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
     }
-
     .button:hover {
       transform: scale(1.05);
       background: linear-gradient(to right, #2563eb, #1e40af);
     }
-
     select {
       padding: 10px;
       font-size: 1rem;
@@ -63,20 +57,17 @@
       background-color: white;
       min-width: 200px;
     }
-
     #webcam-container canvas {
       width: 100%;
       max-width: 400px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-
     #label-container {
       width: 100%;
       max-width: 400px;
       margin-top: 20px;
     }
-
     .label {
       background-color: #ffffff;
       padding: 12px;
@@ -84,27 +75,23 @@
       margin-bottom: 12px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     }
-
     .label-text {
       font-weight: 600;
       margin-bottom: 6px;
       color: #1f2937;
     }
-
     .bar-container {
       background-color: #e5e7eb;
       height: 16px;
       border-radius: 10px;
       overflow: hidden;
     }
-
     .bar {
       height: 100%;
       width: 0%;
       background: linear-gradient(to right, #10b981, #22c55e);
       transition: width 0.4s ease;
     }
-
     @media (max-width: 600px) {
       .controls {
         flex-direction: column;
@@ -119,48 +106,24 @@
   <div class="controls">
     <select id="modelSelect">
       <option value="https://teachablemachine.withgoogle.com/models/T4AwZ052t/">Modelo base</option>
+      <!-- Aquí puedes añadir más modelos: -->
+      <!-- <option value="https://teachablemachine.withgoogle.com/models/OTROMODELO/">Modelo 2</option> -->
     </select>
-
     <button class="button" onclick="init()">Iniciar</button>
     <button class="button" onclick="stop()">Detener</button>
-    <button class="button" onclick="switchCamera()">Cambiar Cámara</button>
   </div>
 
   <div id="webcam-container"></div>
   <div id="label-container"></div>
 
-  
-
-<script>
+  <script>
     let model, webcam, labelContainer, maxPredictions;
-    let currentModelURL = "";
-    let cameras = [];
-    let currentCameraIndex = 0;
     let loopId;
 
     async function init() {
-      await stop();
+      await stop(); // detener si ya está funcionando
 
-      // Enumeramos dispositivos si aún no lo hicimos
-      if (cameras.length === 0) {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        cameras = devices.filter(device => device.kind === "videoinput");
-
-        if (cameras.length === 0) {
-          alert("No se encontraron cámaras");
-          return;
-        }
-
-        // Intentar encontrar la trasera primero
-        const backCam = cameras.find(cam => cam.label.toLowerCase().includes("back") || cam.label.toLowerCase().includes("rear") || cam.label.toLowerCase().includes("environment"));
-        if (backCam) {
-          currentCameraIndex = cameras.indexOf(backCam);
-        } else {
-          currentCameraIndex = 0;
-        }
-      }
-
-      currentModelURL = document.getElementById("modelSelect").value;
+      const currentModelURL = document.getElementById("modelSelect").value;
       const modelURL = currentModelURL + "model.json";
       const metadataURL = currentModelURL + "metadata.json";
 
@@ -168,8 +131,7 @@
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        const deviceId = cameras[currentCameraIndex].deviceId;
-        webcam = new tmImage.Webcam(400, 400, false, { deviceId });
+        webcam = new tmImage.Webcam(400, 400, true); // true: intentará usar la frontal
 
         await webcam.setup();
         await webcam.play();
@@ -207,16 +169,6 @@
       }
     }
 
-    async function switchCamera() {
-      if (cameras.length <= 1) {
-        alert("Solo hay una cámara disponible");
-        return;
-      }
-
-      currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-      await init();
-    }
-
     async function stop() {
       if (webcam) {
         await webcam.stop();
@@ -246,6 +198,5 @@
       }
     }
   </script>
-
 </body>
 </html>
