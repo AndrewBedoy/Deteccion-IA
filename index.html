@@ -1,204 +1,211 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detector de Calidad AI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Detector de Calidad AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(to bottom right, #eef2f3, #cfd9df);
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(to bottom right, #eef2f3, #cfd9df);
+  margin: 0;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
 
-    h1 {
-      color: #c6a138;
-      font-size: 2rem;
-      margin-bottom: 20px;
-      text-align: center;
-    }
+h1 {
+  color: #c6a138;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
 
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      width: 100%;
-      max-width: 500px;
-    }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
+}
 
-    .button, select {
-      flex: 1 1 auto;
-      background: linear-gradient(to right, #2c4b7b, #152B40);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.3s ease;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    }
+.button {
+  background: linear-gradient(to right, #2c4b7b, #152B40);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
 
-    .button:hover {
-      transform: scale(1.05);
-      background: linear-gradient(to right, #41ACE3, #1f69af);
-    }
+.button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to right, #41ACE3, #1f69af);
+}
 
-    select {
-      background-color:#eef2f3;
-      color: #1f2937;
-    }
+select {
+  flex: 1 1 auto;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #eef2f3;
+  color: #1f2937;
+  min-width: 200px;
+}
 
-    #preview {
-      margin: 20px 0;
-      max-width: 100%;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      display: none;
-    }
+#preview {
+  margin: 20px 0;
+  max-width: 400px;
+  max-height: 400px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+}
 
-    #label-container {
-      width: 100%;
-      max-width: 400px;
-      margin-top: 20px;
-    }
+#label-container {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
 
-    .label {
-      background-color: #ffffff;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    }
+.label {
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
 
-    .label-text {
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #1f2937;
-    }
+.label-text {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
 
-    .bar-container {
-      background-color: #e5e7eb;
-      height: 16px;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+.bar-container {
+  background-color: #e5e7eb;
+  height: 16px;
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-    .bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(to right, #10b981, #22c55e);
-      transition: width 0.4s ease;
-    }
+.bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #10b981, #22c55e);
+  transition: width 0.4s ease;
+}
 
-    .table-container {
-      width: 100%;
-      max-width: 700px;
-      overflow-x: auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+.table-container {
+  width: 100%;
+  max-width: 700px;
+  overflow-x: auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: 40px;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border:"1";
+ 
+}
 
-    thead {
-      background: linear-gradient(to right, #2c4b7b, #152B40);
-      color: white;
-    }
+thead {
+  background: linear-gradient(to right, #2c4b7b, #152B40);
+  color: white;
+}
 
-    th, td {
-      text-align: left;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
+th, td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
 
-    img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
+.export-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
 
-    .export-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
+/* RESPONSIVE AJUSTES */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.7rem;
+  }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-      .controls {
-        flex-direction: column;
-        gap: 10px;
-      }
+  .button, select {
+    width: 100%;
+    font-size: 1.1rem;
+  }
 
-      .button, select {
-        width: 100%;
-        font-size: 1.1rem;
-      }
+  #preview {
+    max-width: 100%;
+    height: auto;
+  }
 
-      th, td {
-        font-size: 0.9rem;
-      }
-    }
-  </style>
+  th, td {
+    font-size: 0.95rem;
+  }
+}
+</style>
 </head>
 <body>
-  <h1>Detector de Calidad AI</h1>
+<h1>Detector de Calidad AI</h1>
+<br>
+<h5>Selecciona el modelo de AI</h5>
+<div class="controls">
+  <select id="modelSelect">
+    <option value="https://teachablemachine.withgoogle.com/models/T4AwZ052t/">Modelo base</option>
+    <option value="https://teachablemachine.withgoogle.com/models/u87itobc/">Modelo 2</option>
+  </select>
+  <input type="file" id="fileInput" accept="image/*" class="button" />
+</div>
 
-  <div class="controls">
-    <select id="modelSelect">
-      <option value="https://teachablemachine.withgoogle.com/models/T4AwZ052t/">Modelo base</option>
-      <option value="https://teachablemachine.withgoogle.com/models/u87itobc/">Modelo 2</option>
-    </select>
-    <input type="file" id="fileInput" accept="image/*" class="button" />
-  </div>
+<img id="preview" src="" alt="Vista previa" />
+<div id="label-container"></div>
 
-  <img id="preview" src="" alt="Vista previa" />
-  <div id="label-container"></div>
+<div class="table-container">
+  <h2 style="padding:10px; text-align: center;">Historial de Análisis</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Imagen</th>
+        <th>Resultados</th>
+        <th>Fecha y Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  <div class="table-container" style="margin-top: 40px;">
-    <h2 style="padding:10px;">Historial de Análisis</h2>
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>No.</th>
-          <th>Imagen</th>
-          <th>Resultados</th>
-          <th>Fecha y Hora</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="export-buttons">
-    <button class="button" onclick="guardarTabla('txt')">Guardar como TXT</button>
-    <button class="button" onclick="guardarTabla('csv')">Guardar como CSV</button>
-  </div>
+<div class="export-buttons">
+  <button class="button" onclick="guardarTabla('txt')">Guardar como TXT</button>
+  <button class="button" onclick="guardarTabla('csv')">Guardar como CSV</button>
+</div>
 
 <script>
 let model;
