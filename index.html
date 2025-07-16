@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detector de Calidad AI</title>
+  <title>Detector de0 AI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
@@ -39,7 +39,7 @@
     }
 
     .button {
-      background: linear-gradient(to right, #3b82f6, #2563eb);
+      background: linear-gradient(to right, #2c4b7b, #152B40);
       color: white;
       border: none;
       padding: 10px 20px;
@@ -52,7 +52,7 @@
 
     .button:hover {
       transform: scale(1.05);
-      background: linear-gradient(to right, #2563eb, #1e40af);
+      background: linear-gradient(to right, #41ACE3, #1f69af);
     }
 
     select {
@@ -60,7 +60,7 @@
       font-size: 1rem;
       border-radius: 8px;
       border: 1px solid #ccc;
-      background-color: white;
+      background-color:#eef2f3;
       min-width: 200px;
     }
 
@@ -116,7 +116,7 @@
   </style>
 </head>
 <body>
-  <h1>Detector de Calidad AI</h1>
+  <h1 style="color: #c6a138;">Detector de Calidad AI</h1>
 
   <div class="controls">
     <select id="modelSelect">
@@ -132,8 +132,9 @@
   <div style="width: 100%; max-width: 700px; margin-top: 40px;">
   <h2>Historial de Análisis</h2>
   <table id="resultsTable" border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; background: white;">
-    <thead style="background-color: #3b82f6; color: white;">
+    <thead style="background: linear-gradient(to right, #2c4b7b, #152B40); color: white;">
       <tr>
+        <th>No.</th>
         <th>Imagen</th>
         <th>Resultados</th>
         <th>Fecha y Hora</th>
@@ -142,7 +143,11 @@
     <tbody></tbody>
   </table>
   <br>
-  <button class="button" onclick="guardarTabla()" style="margin: auto; display: block;">Guardar tabla como TXT</button>
+  <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
+  <button class="button" onclick="guardarTabla('txt')">Guardar como TXT</button>
+  <button class="button" onclick="guardarTabla('csv')">Guardar como CSV</button>
+</div>
+
 </div>
 
   <script>
@@ -201,46 +206,99 @@
     }
 
     // Añadir fila a la tabla
-    const table = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
+   const table = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
     const row = table.insertRow();
 
-    const cellImage = row.insertCell(0);
-    cellImage.innerText = fileInput.files[0].name;
+    // Columna del número
+    const cellNumber = row.insertCell(0);
+    cellNumber.innerText = table.rows.length; // el número de fila actual (empieza en 1)
 
+    // Columna de la imagen
+    const cellImage = row.insertCell(1);
 
-    const cellResult = row.insertCell(1);
+    // Mostrar miniatura
+    const thumb = document.createElement("img");
+    thumb.src = preview.src;
+    thumb.width = 100;
+    thumb.style.borderRadius = "6px";
+    cellImage.appendChild(thumb);
+
+    // También mostrar nombre de archivo debajo de la imagen
+    const nameDiv = document.createElement("div");
+    nameDiv.innerText = fileInput.files[0].name;
+    cellImage.appendChild(nameDiv);
+
+    // Columna de resultados
+    const cellResult = row.insertCell(2);
     const pre = document.createElement("pre");
     pre.style.whiteSpace = "pre-wrap";
     pre.innerText = resumenTexto.trim();
     cellResult.appendChild(pre);
 
-    const cellTime = row.insertCell(2);
+    // Columna de fecha y hora
+    const cellTime = row.insertCell(3);
     cellTime.innerText = new Date().toLocaleString();
+
   };
 
-  function guardarTabla() {
+  function guardarTabla(tipo) {
   const table = document.getElementById("resultsTable");
+  const thead = table.getElementsByTagName("thead")[0];
+  const tbody = table.getElementsByTagName("tbody")[0];
   let text = "";
 
-  for (let i = 0; i < table.rows.length; i++) {
-    const cells = table.rows[i].cells;
+  // Separador según el tipo
+  const sep = (tipo === 'csv') ? "," : " | ";
+
+  // Encabezados
+  const headerCells = thead.rows[0].cells;
+  let headerText = "";
+  for (let i = 0; i < headerCells.length; i++) {
+    headerText += headerCells[i].innerText;
+    if (i < headerCells.length - 1) headerText += sep;
+  }
+  text += headerText + "\n";
+
+  // Filas de datos
+  for (let i = 0; i < tbody.rows.length; i++) {
+    const cells = tbody.rows[i].cells;
     let rowText = "";
 
     for (let j = 0; j < cells.length; j++) {
-      // Usar directamente el texto de la celda
-      rowText += cells[j].innerText.replace(/\n/g, " | ");
-      if (j < cells.length - 1) rowText += " | ";
+      let textContent = "";
+
+      if (j === 1) { // Columna de imagen
+        const nameDiv = cells[j].querySelector("div");
+        textContent = nameDiv ? nameDiv.innerText : "";
+      } else {
+        textContent = cells[j].innerText.replace(/\n/g, " | ");
+      }
+
+      // Si es CSV, quitar posibles comas del texto
+      if (tipo === 'csv') {
+        textContent = '"' + textContent.replace(/"/g, '""') + '"'; // escapamos comillas
+      }
+
+      rowText += textContent;
+      if (j < cells.length - 1) rowText += sep;
     }
 
     text += rowText + "\n";
   }
 
+  const select = document.getElementById("modelSelect");
+  const nombreModelo = select.options[select.selectedIndex].text;
+
+  // Nombre del archivo
+  const fileName = (tipo === 'csv') ? 'Resultados_detector_' + nombreModelo + '.csv'  : 'Resultados_detector_' + nombreModelo + '.txt';
+
   const blob = new Blob([text], { type: "text/plain" });
   const link = document.createElement("a");
-  link.download = "resultados_detector.txt";
+  link.download = fileName;
   link.href = URL.createObjectURL(blob);
   link.click();
 }
+
 
 </script>
 
