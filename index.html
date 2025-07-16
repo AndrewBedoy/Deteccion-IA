@@ -294,6 +294,14 @@ function guardarTabla(tipo) {
   const tbody = table.getElementsByTagName("tbody")[0];
   let text = "";
 
+  if (tbody.rows.length === 0) {
+    alert("⚠️ Debes hacer al menos un registro antes de guardar.");
+    return; // salir de la función si no hay datos
+  }
+
+  const confirmar = confirm("¿Estás seguro de que deseas guardar el archivo?");
+  if (!confirmar) return; // si el usuario cancela, salir
+
   const sep = (tipo === 'csv') ? "," : " | ";
 
   const headerCells = thead.rows[0].cells;
