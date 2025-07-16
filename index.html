@@ -348,11 +348,10 @@ function guardarTabla(tipo) {
 }
 
   window.addEventListener("beforeunload", function (e) {
-  // Mostramos el mensaje solo si hay registros
   const tbody = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
   if (tbody.rows.length > 0) {
-    e.preventDefault();  // necesario para algunos navegadores
-    e.returnValue = '';  // Chrome necesita esta línea para mostrar el cuadro de confirmación
+    e.preventDefault();        // Necesario para algunos navegadores
+    e.returnValue = '';       // Safari, Chrome y otros muestran el cuadro nativo
   }
 });
 </script>
