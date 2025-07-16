@@ -346,6 +346,15 @@ function guardarTabla(tipo) {
   link.href = URL.createObjectURL(blob);
   link.click();
 }
+
+  window.addEventListener("beforeunload", function (e) {
+  // Mostramos el mensaje solo si hay registros
+  const tbody = document.getElementById("resultsTable").getElementsByTagName("tbody")[0];
+  if (tbody.rows.length > 0) {
+    e.preventDefault();  // necesario para algunos navegadores
+    e.returnValue = '';  // Chrome necesita esta línea para mostrar el cuadro de confirmación
+  }
+});
 </script>
 </body>
 </html>
